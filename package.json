@@ -9,14 +9,19 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@auth/supabase-adapter": "^1.10.0",
     "@hubspot/api-client": "^13.0.0",
+    "@next-auth/supabase-adapter": "^0.2.1",
     "@pinecone-database/pinecone": "^6.1.1",
+    "@supabase/supabase-js": "^2.50.5",
     "googleapis": "^152.0.0",
     "next": "15.3.5",
     "next-auth": "^4.24.11",
+    "nodemailer": "^6.10.1",
     "openai": "^5.9.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "pgvector": "^0.2.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
