@@ -47,102 +47,114 @@ Always be professional, helpful, and proactive in managing client relationships.
 
 export class AIAgent {
   constructor() {
-    this.conversationHistory = []
-    this.activeInstructions = []
-    this.loadActiveInstructions()
+    this.activeInstructions = [];
+    this.chatHistory = []; // For short-term memory
+    this.loadActiveInstructions();
   }
 
   async loadActiveInstructions() {
     try {
-      this.activeInstructions = await getActiveInstructions()
+      this.activeInstructions = await getActiveInstructions();
     } catch (error) {
-      console.error('Error loading active instructions:', error)
+      console.error('Error loading active instructions:', error);
     }
   }
 
+  // Build the correct message sequence for OpenAI tool use, with short-term memory
+  buildConversationMessages(userMessage, context, recentHistory = []) {
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT }
+    ];
+
+    // Add active instructions as context
+    if (this.activeInstructions.length > 0) {
+      const instructionsText = this.activeInstructions
+        .map(instruction => instruction.instruction)
+        .join('\n');
+      messages.push({
+        role: 'system',
+        content: `Ongoing instructions to follow:\n${instructionsText}`
+      });
+    }
+
+    // Add relevant context if available
+    if (context && context.length > 0) {
+      const contextText = buildContext(context);
+      messages.push({
+        role: 'system',
+        content: `Relevant information from your knowledge base:\n${contextText}`
+      });
+    }
+
+    // Add recent user/assistant history (short-term memory, no tool/tool_call messages)
+    for (const msg of recentHistory) {
+      messages.push({
+        role: msg.role,
+        content: msg.content ?? ""
+      });
+    }
+
+    // Always add the current user message
+    messages.push({ role: 'user', content: userMessage ?? "" });
+
+    return messages;
+  }
+
   async processMessage(userMessage) {
-    // TODO: Implement user-specific features using userId
     try {
-      // Check if OpenAI is available
-      const openaiAvailable = process.env.OPENAI_API_KEY 
-      
-      if (!openaiAvailable) {
-        return this.getOfflineResponse(userMessage)
-      }
-      
       // Search for relevant context
-      const context = await this.getRelevantContext(userMessage)
-      
-      // Build conversation history
-      const messages = this.buildConversationMessages(userMessage, context)
-      
-      // Get response from OpenAI with tool calling
-      const response = await this.getAIResponse(messages)
-      
-      // Handle tool calls if any
-      const toolResults = await this.handleToolCalls(response)
-      
-      // Update conversation history
-      this.conversationHistory.push({
-        role: 'user',
-        content: userMessage
-      })
-      
-      if (toolResults.length > 0) {
-        // Add the initial assistant response with tool calls
-        this.conversationHistory.push({
+      const context = await this.getRelevantContext(userMessage);
+      // Add the last N user/assistant messages to the prompt (short-term memory)
+      const recentHistory = this.chatHistory.slice(-6); // 3 user+assistant pairs
+      // 1. First, send user message (and context) to OpenAI
+      let messages = this.buildConversationMessages(userMessage, context, recentHistory);
+      let response = await this.getAIResponse(messages);
+      // 2. If tool calls, handle them
+      if (response.tool_calls && response.tool_calls.length > 0) {
+        // Add the assistant message with tool_calls
+        messages.push({
           role: 'assistant',
-          content: response.content,
+          content: response.content ?? '',
           tool_calls: response.tool_calls
-        })
-        
-        // Add tool response messages for each tool call
+        });
+        // For each tool call, add a tool message
+        const toolResults = await this.handleToolCalls(response);
         for (const toolResult of toolResults) {
-          this.conversationHistory.push({
+          messages.push({
             role: 'tool',
-            content: JSON.stringify(toolResult.result),
+            content: String(JSON.stringify(toolResult.result) ?? ""),
             tool_call_id: toolResult.tool_call_id
-          })
+          });
         }
-        
-        // Give AI a second chance to respond with tool results
-        const finalResponse = await this.getAIResponseWithToolResults(toolResults)
-        
-        this.conversationHistory.push({
-          role: 'assistant',
-          content: finalResponse.content
-        })
-        
+        // 3. Send the updated messages array back to OpenAI for the final response
+        const finalResponse = await this.getAIResponse(messages);
+        // Update chat history (short-term memory)
+        this.chatHistory.push({ role: 'user', content: userMessage ?? "" });
+        this.chatHistory.push({ role: 'assistant', content: finalResponse.content ?? "" });
         return {
           response: finalResponse.content,
           toolResults,
-          context: this.buildToolResultsContext(toolResults)
-        }
+          context: context.length > 0 ? 'Found relevant context from knowledge base' : 'No relevant context found'
+        };
       } else {
-        this.conversationHistory.push({
-          role: 'assistant',
-          content: response.content
-        })
-        
+        // No tool calls, just return the response
+        this.chatHistory.push({ role: 'user', content: userMessage ?? "" });
+        this.chatHistory.push({ role: 'assistant', content: response.content ?? "" });
         return {
           response: response.content,
-          toolResults,
+          toolResults: [],
           context: context.length > 0 ? 'Found relevant context from knowledge base' : 'No relevant context found'
-        }
+        };
       }
-      
     } catch (error) {
-      console.error('Error processing message:', error)
-      
-      // Check if it's an OpenAI quota/access issue
-      if (error.message.includes('quota exceeded') || error.message.includes('model not available')) {
-        return this.getOfflineResponse(userMessage, error.message)
+      console.error('Error processing message:', error);
+      if (error.message && (error.message.includes('quota exceeded') || error.message.includes('model not available'))) {
+        return this.getOfflineResponse(userMessage, error.message);
       }
-      
       return {
         response: 'I apologize, but I encountered an error processing your request. Please try again.',
         error: error.message
-      }
+      };
     }
   }
 
@@ -185,48 +197,6 @@ export class AIAgent {
       console.error('Error searching context:', error)
       return []
     }
-  }
-
-  buildConversationMessages(userMessage, context) {
-    const messages = [
-      {
-        role: 'system',
-        content: SYSTEM_PROMPT
-      }
-    ]
-
-    // Add active instructions as context
-    if (this.activeInstructions.length > 0) {
-      const instructionsText = this.activeInstructions
-        .map(instruction => instruction.instruction)
-        .join('\n')
-      
-      messages.push({
-        role: 'system',
-        content: `Ongoing instructions to follow:\n${instructionsText}`
-      })
-    }
-
-    // Add relevant context if available
-    if (context.length > 0) {
-      const contextText = buildContext(context)
-      messages.push({
-        role: 'system',
-        content: `Relevant information from your knowledge base:\n${contextText}`
-      })
-    }
-
-    // Add conversation history (last 10 messages to avoid token limits)
-    const recentHistory = this.conversationHistory.slice(-10)
-    messages.push(...recentHistory)
-
-    // Add current user message
-    messages.push({
-      role: 'user',
-      content: userMessage
-    })
-
-    return messages
   }
 
   async getAIResponse(messages) {

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../auth/[...nextauth]/route.js'
 import { getGoogleToken } from '../../../lib/tools.js'
+import { authOptions } from '@/lib/auth.js'
 
 export async function GET() {
   try {
