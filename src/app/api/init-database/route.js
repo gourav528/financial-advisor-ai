@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { initializeDatabase } from '../../../lib/database.js'
 
-export async function POST(request) {
+export async function POST() {
   try {
     console.log('Manual database initialization requested...')
     

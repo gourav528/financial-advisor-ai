@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { Client } from '@hubspot/api-client';
 
 // Create HubSpot client instance
-let hubspotClient = null;
+// let hubspotClient = null;
 
 export async function getHubSpotClient() {
   try {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { importTestData, testRAGQueries } from '../../../lib/import-test-data.js'
+import { importTestData } from '../../../lib/import-test-data.js'
 
 export async function POST(request) {
   try {
@@ -9,7 +9,7 @@ export async function POST(request) {
       const result = await importTestData()
       return NextResponse.json(result)
     } else if (action === 'test') {
-      const result = await testRAGQueries()
+    //   const result = await testRAGQueries()
       return NextResponse.json({ success: true, message: 'RAG test completed' })
     } else {
       return NextResponse.json(

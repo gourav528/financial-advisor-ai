@@ -2,7 +2,7 @@ import { google } from 'googleapis'
 import { getHubSpotClient } from './hubspot.js'
 import { createTask, updateTask } from './database.js'
 import { getServerSession } from "next-auth/next"
-import { authOptions } from "../app/api/auth/[...nextauth]/route.js"
+import { authOptions } from "./auth.js"
 
 // Helper function to get Google access token from NextAuth session
 export async function getGoogleToken() {

@@ -46,16 +46,16 @@ async function getServiceStatus(service) {
       case 'hubspot':
         return await getHubSpotStatus()
       default:
-        return { error: 'Unknown service' }
+        return NextResponse.json({ error: 'Unknown service' })
     }
   } catch (error) {
     console.error(`Error getting ${service} status:`, error)
-    return {
+    return NextResponse.json({
       service,
       active: false,
       error: error.message,
       lastCheck: new Date().toISOString()
-    }
+    })
   }
 }
 
@@ -79,12 +79,12 @@ async function getGmailStatus() {
         access_token: accessToken
       })
     } else {
-      return {
+      return NextResponse.json({
         service: 'gmail',
         active: false,
         error: 'Not authenticated with Google',
         lastCheck: new Date().toISOString()
-      }
+      })
     }
 
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client })
@@ -92,22 +92,22 @@ async function getGmailStatus() {
     // Check if Gmail API is accessible
     const profile = await gmail.users.getProfile({ userId: 'me' })
 
-    return {
+    return NextResponse.json({
       service: 'gmail',
       active: true,
       email: profile.data.emailAddress,
       messagesTotal: profile.data.messagesTotal,
       threadsTotal: profile.data.threadsTotal,
       lastCheck: new Date().toISOString()
-    }
+    })
 
   } catch (error) {
-    return {
+    return NextResponse.json({
       service: 'gmail',
       active: false,
       error: error.message,
       lastCheck: new Date().toISOString()
-    }
+    })
   }
 }
 
@@ -131,12 +131,12 @@ async function getCalendarStatus() {
         access_token: accessToken
       })
     } else {
-      return {
+      return NextResponse.json({
         service: 'calendar',
         active: false,
         error: 'Not authenticated with Google',
         lastCheck: new Date().toISOString()
-      }
+      })
     }
 
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client })
@@ -144,21 +144,21 @@ async function getCalendarStatus() {
     // Check if Calendar API is accessible
     const calendarList = await calendar.calendarList.list()
 
-    return {
+    return NextResponse.json({
       service: 'calendar',
       active: true,
       calendars: calendarList.data.items?.length || 0,
       primaryCalendar: calendarList.data.items?.find(c => c.primary)?.summary,
       lastCheck: new Date().toISOString()
-    }
+    })
 
   } catch (error) {
-    return {
+    return NextResponse.json({
       service: 'calendar',
       active: false,
       error: error.message,
       lastCheck: new Date().toISOString()
-    }
+    })
   }
 }
 
@@ -169,39 +169,39 @@ async function getHubSpotStatus() {
 
     // Check if HubSpot client is properly configured
     if (!hubspotClient || !hubspotClient.crm) {
-      return {
+      return NextResponse.json({
         service: 'hubspot',
         active: false,
         error: 'HubSpot not configured. Please connect your HubSpot account.',
         lastCheck: new Date().toISOString()
-      }
+      })
     }
 
     // Try to access HubSpot API to verify connection
     try {
       const contacts = await hubspotClient.crm.contacts.basicApi.getPage(1)
-      return {
+      return NextResponse.json({
         service: 'hubspot',
         active: true,
         contactsCount: contacts.results?.length || 0,
         lastCheck: new Date().toISOString()
-      }
+      })
     } catch (apiError) {
-      return {
+      return NextResponse.json({
         service: 'hubspot',
         active: false,
         error: apiError.message,
         lastCheck: new Date().toISOString()
-      }
+      })
     }
 
   } catch (error) {
-    return {
+    return NextResponse.json({
       service: 'hubspot',
       active: false,
       error: error.message,
       lastCheck: new Date().toISOString()
-    }
+    })
   }
 }
 

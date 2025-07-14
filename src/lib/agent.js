@@ -3,9 +3,13 @@ import { searchContext, buildContext } from './rag.js'
 import { tools, executeTool } from './tools.js'
 import { getActiveInstructions } from './database.js'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Initialize OpenAI client only if API key is available
+let openai = null
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  })
+}
 
 // System prompt for the AI agent
 const SYSTEM_PROMPT = `You are an AI financial advisor assistant that helps manage client relationships, emails, and scheduling. You have access to these tools:
@@ -56,7 +60,7 @@ export class AIAgent {
     }
   }
 
-  async processMessage(userMessage, userId = null) {
+  async processMessage(userMessage) {
     // TODO: Implement user-specific features using userId
     try {
       // Check if OpenAI is available
@@ -227,6 +231,11 @@ export class AIAgent {
 
   async getAIResponse(messages) {
     try {
+      // Check if OpenAI is available
+      if (!openai) {
+        throw new Error('OpenAI API key not configured')
+      }
+
       // Validate tools format before sending to OpenAI
       const validTools = tools.filter(tool => 
         tool.type === 'function' && 
@@ -311,6 +320,11 @@ export class AIAgent {
 
   async getAIResponseWithToolResults(toolResults) {
     try {
+      // Check if OpenAI is available
+      if (!openai) {
+        throw new Error('OpenAI API key not configured')
+      }
+
       // Build a message with tool results as context
       const toolResultsContext = this.buildToolResultsContext(toolResults)
       

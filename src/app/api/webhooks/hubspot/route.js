@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { processHubSpotContact, processHubSpotNote } from '../../../../lib/rag.js'
 import { createTask } from '../../../../lib/database.js'
-import { AIAgent } from '../../../../lib/agent.js'
+// import { AIAgent } from '../../../../lib/agent.js'
 import { getHubSpotClient } from '../../../../lib/hubspot.js'
 
 export async function POST(request) {
@@ -11,7 +11,7 @@ export async function POST(request) {
     console.log('HubSpot webhook received:', body)
 
     // Handle different types of HubSpot events
-    const { subscriptionType, portalId, objectId, changeSource, changeFlag, appId } = body
+    const { subscriptionType, objectId } = body
 
     if (!subscriptionType || !objectId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -175,7 +175,7 @@ async function handleNoteEvent(noteId, hubspotClient) {
 
 async function handleProactiveContactActions(contactData) {
   try {
-    const agent = new AIAgent()
+    // const agent = new AIAgent()
     
     // Check for new leads
     if (contactData.properties.lifecyclestage === 'lead') {

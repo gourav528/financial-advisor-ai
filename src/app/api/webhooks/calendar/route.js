@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { processCalendarEvent } from '../../../../lib/rag.js'
 import { createTask } from '../../../../lib/database.js'
-import { AIAgent } from '../../../../lib/agent.js'
+// import { AIAgent } from '../../../../lib/agent.js'
 
 export async function POST(request) {
   try {
@@ -10,7 +10,9 @@ export async function POST(request) {
     console.log('Calendar webhook received:', body)
 
     // Handle different types of calendar events
-    const { resourceId, resourceUri, channelId, expiration } = body
+    const { resourceId, 
+// resourceUri, channelId, expiration
+ } = body
 
     if (!resourceId) {
       return NextResponse.json({ error: 'Missing resourceId' }, { status: 400 })
@@ -82,7 +84,7 @@ export async function POST(request) {
 
 async function handleProactiveCalendarActions(eventData) {
   try {
-    const agent = new AIAgent()
+    // const agent = new AIAgent()
     
     // Check if this is a new event (not updated)
     const isNewEvent = eventData.status === 'confirmed' && 

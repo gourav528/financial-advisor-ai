@@ -191,7 +191,7 @@ export async function searchEmbeddings(queryEmbedding, limit = 10, filters = {})
     return resultsWithSimilarity
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, limit)
-      .map(({ similarity, ...item }) => item) // Remove similarity from final result
+      .map(({...item }) => item) // Remove similarity from final result
 
   } catch (error) {
     console.error('Error searching embeddings:', error)

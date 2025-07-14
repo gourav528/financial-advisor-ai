@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { processEmail } from '../../../../lib/rag.js'
 import { createTask } from '../../../../lib/database.js'
-import { AIAgent } from '../../../../lib/agent.js'
+// import { AIAgent } from '../../../../lib/agent.js'
 
 export async function POST(request) {
   try {
@@ -120,7 +120,7 @@ function extractEmailBody(payload) {
 
 async function handleProactiveEmailActions(emailData) {
   try {
-    const agent = new AIAgent()
+    // const agent = new AIAgent()
     
     // Check if this email requires immediate attention
     const urgentKeywords = ['urgent', 'emergency', 'asap', 'important', 'critical']
